@@ -117,18 +117,17 @@ func (m SpongeMode) String() string {
 
 // SpongeState holds the full runtime state of the variable-width sponge.
 type SpongeState struct {
-	State       []*big.Int // current state vector (length = CurrentWidth)
+	State        []*big.Int // current state vector (length = CurrentWidth)
 	CurrentWidth int
-	FieldPrime  *big.Int
-	Mode        SpongeMode
-	Params      *Poseidon2Params // current permutation params (matches CurrentWidth)
-	MDS         *MDSMatrix       // current MDS matrix (matches CurrentWidth)
+	FieldPrime   *big.Int
+	Mode         SpongeMode
+	MDS          *MDSMatrix // current MDS matrix (matches CurrentWidth)
 
 	// Diagnostics
-	ExpandCount   int // number of times the sponge expanded
-	ContractCount int // number of times the sponge contracted
-	PermCount     int // total permutations applied
-	WidthHistory  []int // width at each permutation step
+	ExpandCount  int   // number of times the sponge expanded
+	ContractCount int  // number of times the sponge contracted
+	PermCount    int   // total permutations applied
+	WidthHistory []int // width at each permutation step
 }
 
 // NewSponge creates a new variable-width sponge starting at t=2.
@@ -141,7 +140,6 @@ func NewSponge(fieldPrime *big.Int, mode SpongeMode) *SpongeState {
 		WidthHistory: []int{},
 	}
 	s.State = s.seedState(initialWidth, 0)
-	s.Params = NewPoseidon2Params(initialWidth, 8, partialRoundsForWidth(initialWidth), fieldPrime)
 	s.MDS = s.newMDS(initialWidth)
 	return s
 }
@@ -196,49 +194,23 @@ func (s *SpongeState) Hash(inputs []*big.Int, outLen int) []*big.Int {
 
 // ── Internal permutation ──────────────────────────────────────────────────────
 
-// permute runs one full Poseidon2 permutation on the current state,
-// including the MDS matrix application that was the TODO in ci_poseidon.go.
+// permute delegates to the canonical ApplyPermutation engine in permutation.go.
+// This eliminates the previous duplicated round logic and ensures the sponge
+// always uses the properly tuned HADES structure with correct round parameters.
 func (s *SpongeState) permute() {
-	p := s.FieldPrime
-	rc := s.Params.RoundConstants
-	rcIdx := 0
-	width := s.CurrentWidth
-	totalRounds := s.Params.FullRounds + s.Params.PartialRounds
+	rc := NewRoundConstants(s.CurrentWidth, s.FieldPrime)
 
-	// Copy state
-	st := make([]*big.Int, width)
+	// Copy state so ApplyPermutation works on a fresh slice
+	st := make([]*big.Int, s.CurrentWidth)
 	for i, v := range s.State {
 		st[i] = new(big.Int).Set(v)
 	}
 
-	for round := 0; round < totalRounds; round++ {
-		// 1. Add round constants
-		for i := 0; i < width; i++ {
-			if rcIdx < len(rc) {
-				st[i] = new(big.Int).Add(st[i], rc[rcIdx])
-				st[i].Mod(st[i], p)
-				rcIdx++
-			}
-		}
-
-		// 2. S-box layer
-		isFullRound := round < s.Params.FullRounds/2 ||
-			round >= totalRounds-s.Params.FullRounds/2
-		if isFullRound {
-			for i := 0; i < width; i++ {
-				st[i] = SBox(st[i], p)
-			}
-		} else {
-			st[0] = SBox(st[0], p)
-		}
-
-		// 3. MDS matrix multiplication — full diffusion layer
-		st = s.MDS.Apply(st)
-	}
+	ApplyPermutation(st, rc, s.MDS)
 
 	s.State = st
 	s.PermCount++
-	s.WidthHistory = append(s.WidthHistory, width)
+	s.WidthHistory = append(s.WidthHistory, s.CurrentWidth)
 }
 
 // ── Diffusion scoring ─────────────────────────────────────────────────────────
@@ -317,7 +289,6 @@ func (s *SpongeState) expand() {
 
 	s.State = newState
 	s.CurrentWidth = newWidth
-	s.Params = NewPoseidon2Params(newWidth, 8, partialRoundsForWidth(newWidth), s.FieldPrime)
 	s.MDS = s.newMDS(newWidth)
 	s.ExpandCount++
 }
@@ -339,7 +310,6 @@ func (s *SpongeState) contract() {
 		newState[i] = new(big.Int).Set(s.State[i])
 	}
 	for i := newWidth; i < s.CurrentWidth; i++ {
-		// Fold element i back into position (i mod newWidth)
 		idx := i % newWidth
 		newState[idx] = new(big.Int).Add(newState[idx], s.State[i])
 		newState[idx].Mod(newState[idx], p)
@@ -347,7 +317,6 @@ func (s *SpongeState) contract() {
 
 	s.State = newState
 	s.CurrentWidth = newWidth
-	s.Params = NewPoseidon2Params(newWidth, 8, partialRoundsForWidth(newWidth), s.FieldPrime)
 	s.MDS = s.newMDS(newWidth)
 	s.ContractCount++
 }
@@ -370,23 +339,6 @@ func (s *SpongeState) newMDS(width int) *MDSMatrix {
 		return NewCiDerivedMDS(width, s.FieldPrime)
 	}
 	return NewCirculantMDS(width, s.FieldPrime)
-}
-
-// partialRoundsForWidth returns the standard partial round count for each width.
-// Wider states need fewer partial rounds relative to their size.
-func partialRoundsForWidth(width int) int {
-	switch width {
-	case 2:
-		return 56
-	case 3:
-		return 56
-	case 4:
-		return 56
-	case 6:
-		return 52
-	default:
-		return 56
-	}
 }
 
 // DiagnosticsString returns a human-readable summary of sponge behaviour.

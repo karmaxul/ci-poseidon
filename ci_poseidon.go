@@ -38,6 +38,25 @@ var BN254ScalarField, _ = new(big.Int).SetString(
 var BLS12381ScalarField, _ = new(big.Int).SetString(
 	"52435875175126190479447740508185965837690552500527637822603658699938581184513", 10)
 
+// GoldilocksField is p = 2^64 - 2^32 + 1 = 18446744069414584321
+//
+// Goldilocks is the standard field for STARK-based systems (Plonky2, Plonky3,
+// Polygon zkEVM). Its 64-bit structure makes arithmetic extremely fast on
+// modern hardware — no multi-precision arithmetic needed for the field itself.
+//
+// For ci-poseidon, Goldilocks support opens the FRI/STARK research direction:
+// the 18-bit binary period of Ci = 85/27 may align naturally with Goldilocks
+// evaluation domains (which are also powers-of-two friendly).
+//
+// Note: the x^5 S-box is valid over Goldilocks because gcd(5, p-1) = 1.
+var GoldilocksField, _ = new(big.Int).SetString("18446744069414584321", 10)
+
+// NewSpongeGoldilocks creates a variable-width sponge over the Goldilocks field.
+// This is the STARK-friendly entry point for ci-poseidon.
+func NewSpongeGoldilocks(mode SpongeMode) *SpongeState {
+	return NewSponge(GoldilocksField, mode)
+}
+
 // ── First 512 primes (shared with ci-sha4096) ─────────────────────────────────
 
 // primes holds the first 512 prime numbers, matching the prime sequence used
