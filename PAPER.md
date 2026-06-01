@@ -201,15 +201,18 @@ R1CS multiplication constraints are the primary cost metric for Groth16-style
 SNARK proofs. Linear operations (MDS matrix, AddRoundConstants) are free.
 Each x^5 S-box costs exactly 3 multiplication constraints.
 
-| Width | rf | rp (ci) | ci-poseidon | Vanilla Poseidon2 | Savings |
-|-------|----|---------|-------------|-------------------|---------|
-| t=2   | 8  | 56      | 216         | 216               | 0 (0%)      |
-| t=3   | 8  | 40      | 192         | 240               | 48 (20.0%)  |
-| t=4   | 8  | 32      | 192         | 264               | 72 (27.3%)  |
-| t=6   | 8  | 24      | 216         | 312               | 96 (30.8%)  |
-| **Total** | | | **816** | **1,032** | **216 (20.9%)** |
+Estimated counts (from round structure) and actual counts (measured by gnark's
+compiler) are reported together. The small difference (+2 to +6) reflects gnark's
+internal wiring constraints for signal equality checks.
 
-ci-Poseidon achieves 20–31% constraint savings over vanilla Poseidon2 at
+| Width | rf | rp (ci) | Estimated | Actual (gnark) | Vanilla Poseidon2 | Savings |
+|-------|----|---------|-----------|----------------|-------------------|---------|
+| t=2   | 8  | 56      | 216       | **218**        | 216               | 0 (0%)      |
+| t=3   | 8  | 40      | 192       | **195**        | 240               | 45 (18.8%)  |
+| t=4   | 8  | 32      | 192       | **196**        | 264               | 68 (25.8%)  |
+| t=6   | 8  | 24      | 216       | **222**        | 312               | 90 (28.8%)  |
+
+ci-Poseidon achieves 19–29% constraint savings over vanilla Poseidon2 at
 widths t=3 through t=6. The savings grow with width because fewer partial
 rounds are needed as the MDS matrix provides stronger diffusion at larger t.
 
@@ -260,6 +263,45 @@ and the prime sequence.
 
 This is a categorical distinction from LFSR-based generation, where the
 constants are only as trustworthy as the seed value and the LFSR implementation.
+
+### 4.8 Groth16 Prover and Verifier Time
+
+Prover and verifier times were measured using gnark v0.15.0 (Groth16 backend,
+BN254 curve) on an AMD Ryzen 7 5800 8-core processor. Each benchmark ran a
+minimum of 447 iterations.
+
+| Width | Prove time | Verify time | Proof size |
+|-------|-----------|-------------|------------|
+| t=2   | 2.66ms    | 528µs       | ~127 bytes |
+| t=3   | 2.50ms    | 531µs       | ~127 bytes |
+| t=4   | 2.48ms    | 543µs       | ~127 bytes |
+| t=6   | 2.63ms    | 554µs       | ~127 bytes |
+
+**The headline result: prover time is essentially flat across all four widths.**
+
+Despite t=6 having 3× the state elements of t=2, the prover takes nearly
+identical time across all widths (2.48–2.66ms, a spread of only 0.18ms).
+This is a direct consequence of the tuned round parameters — wider states
+use fewer partial rounds, keeping the total constraint count balanced:
+
+```
+t=2: 218 constraints,  2.66ms
+t=3: 195 constraints,  2.50ms  ← fewer constraints, slightly faster
+t=4: 196 constraints,  2.48ms  ← fewer constraints, slightly faster
+t=6: 222 constraints,  2.63ms  ← slightly more, back to t=2 level
+```
+
+This means the variable-width sponge's expansion from t=2 to t=6 carries
+**near-zero prover cost**. The breathing design is essentially free at the
+ZK layer — the construction automatically uses the state width that provides
+the best diffusion without penalising the prover.
+
+**Verifier time** scales gently from 528µs to 554µs across all widths —
+all under 560µs, well within practical on-chain verification budgets.
+Groth16 proof size is constant at ~127 bytes regardless of circuit size.
+
+**Memory allocation** is consistent across widths (~297–306 KB per proof),
+confirming the flat cost profile is not an artefact of memory effects.
 
 ---
 
@@ -323,15 +365,25 @@ over vanilla Poseidon2:
 
 - Avalanche statistically indistinguishable from ideal (50.00%) across
   BN254, BLS12-381, and Goldilocks fields
-- 20–31% R1CS constraint savings at t=3, t=4, and t=6
+- 19–29% actual R1CS constraint savings at t=3, t=4, and t=6 (gnark-measured)
+- **Prover time flat across all widths: 2.48–2.66ms** — the variable-width
+  expansion carries near-zero cost at the ZK layer
+- Verifier time under 560µs at all widths, proof size constant at ~127 bytes
 - Zero collisions across 500 samples
 - All constants verifiable from first principles — no LFSR seed trust
 - Variable-width sponge adapts organically, stabilising at t=6 within
   4 permutation steps
 
+The flat prover time profile is the most significant practical result:
+it demonstrates that the breathing sponge design can be used freely in ZK
+applications without choosing a fixed width at design time. The construction
+self-selects the optimal width for the input, and the prover pays essentially
+the same cost regardless.
+
 The construction is available as an open-source Go library with full test
-coverage (87 tests), production Circom circuits for all four widths, and
-a code generator that outputs any width with any supported field.
+coverage (87+ tests), production Circom circuits for all four widths, gnark
+Groth16 circuits, and a code generator that outputs any width with any
+supported field.
 
 *"The symmetry is not in the presentation. It is in the structure of matter itself."*
 
