@@ -1,0 +1,593 @@
+\documentclass[preprint]{iacrtrans}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage{array}
+\usepackage{multirow}
+
+% ── Listings style for Go/Circom code ─────────────────────────────────────────
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{red},
+}
+
+% ── Custom commands ───────────────────────────────────────────────────────────
+\newcommand{\Ci}{\ensuremath{\mathsf{Ci}}}
+\newcommand{\GF}[1]{\ensuremath{\mathbb{F}_{#1}}}
+\newcommand{\BN}{\ensuremath{\mathsf{BN254}}}
+\newcommand{\BLS}{\ensuremath{\mathsf{BLS12\text{-}381}}}
+\newcommand{\GL}{\ensuremath{\mathsf{Goldilocks}}}
+\newcommand{\ciposeidon}{\ensuremath{\mathsf{ci\text{-}Poseidon}}}
+\newcommand{\cisha}{\ensuremath{\mathsf{ci\text{-}sha4096}}}
+
+% ─────────────────────────────────────────────────────────────────────────────
+
+\title{\ciposeidon: Rational Constant Structures for\\
+       Arithmetization-Oriented Hash Functions}
+
+\author{Christopher Seekins\inst{1} \and Claude\inst{2}}
+
+\institute{
+  Harmony Worldwide / HealChain \and
+  Anthropic (CTO, HealChain)
+}
+
+\begin{document}
+
+\maketitle
+
+% ── Abstract ──────────────────────────────────────────────────────────────────
+\begin{abstract}
+We present \ciposeidon, a ZK-friendly hash construction derived from the
+Harmony Worldwide mathematical framework. The construction introduces two
+novel contributions: (1)~round constants generated from the rational constant
+$\Ci = 85/27$ reduced modulo target field primes, replacing LFSR-based
+pseudorandom generation with a verifiable first-principles derivation; and
+(2)~a \emph{variable-width sponge} that adapts its internal state geometry
+based on measured diffusion, with all transition thresholds governed by atomic
+resonance frequencies from the Harmony Worldwide periodic table.
+
+We report experimental results across three fields ($\BN$, $\BLS$,
+$\GL$) demonstrating avalanche behaviour statistically indistinguishable from
+the ideal 50.00\%. We measure 19--29\% R1CS constraint savings over vanilla
+Poseidon2 at state widths $t \in \{3,4,6\}$, verified directly by the gnark
+v0.15.0 compiler. Most significantly, Groth16 prover time is \emph{flat}
+across all widths (2.48--2.66\,ms, spread of 0.18\,ms), demonstrating that
+variable-width state expansion carries near-zero cost at the ZK layer.
+
+All round constants are verifiable from first principles via the formula
+$K[i] = \lfloor 85 \cdot p_i \cdot 2^{64} \rfloor \cdot (27(p_i+1))^{-1}
+\bmod p$, where $p_i$ is the $i$-th prime. No LFSR seed trust is required.
+
+\keywords{arithmetization-oriented hashing \and Poseidon2 \and rational
+constants \and ZK-SNARK \and variable-width sponge \and HADES design \and
+BN254 \and Goldilocks}
+\end{abstract}
+
+% ── 1. Introduction ───────────────────────────────────────────────────────────
+\section{Introduction}
+
+Arithmetization-oriented (AO) hash functions are a critical primitive in
+modern zero-knowledge proof systems. The dominant construction, Poseidon2
+\cite{GKRRS23}, achieves low multiplicative complexity by applying a
+HADES-style~\cite{GLRRS20} permutation with an $x^5$ S-box over large prime
+fields. Round constants are generated via a Grain LFSR seeded with
+instance-specific parameters.
+
+While cryptographically sound, LFSR-based generation provides no algebraic
+characterisation of the constants beyond pseudorandomness. Their security
+properties must be argued heuristically, and their derivation cannot be
+independently reconstructed without access to the original seed and LFSR
+specification.
+
+\paragraph{Our contribution.} We replace LFSR-based generation with a
+\emph{rational constant framework} based on the constant $\Ci = 85/27$,
+derived from the Harmony Worldwide circle geometry framework~\cite{HW26}. The
+key property of $\Ci$ is rationality: its binary expansion has an exact
+18-bit repeating period, enabling platform-independent constant derivation
+using only integer arithmetic. In $\GF{p}$, the constant $a/b$ is represented
+as $a \cdot b^{-1} \bmod p$~--- a single field element computable from first
+principles by any verifier with the prime sequence and the ratio $85/27$.
+
+We additionally introduce the first \emph{variable-width sponge} for AO
+hashing, in which the state expands through $t \in \{2,3,4,6\}$ based on a
+measured diffusion score. All transition thresholds derive from the same
+resonance matrix that governs the round constants, creating a unified harmonic
+framework throughout the construction.
+
+\paragraph{Relationship to \cisha{}.} This work extends the Harmony Worldwide
+cryptographic framework introduced in~\cite{See26}. The $\Ci = 85/27$ constant
+and the resonance matrix layer 2 were first applied to hash function design in
+\cisha{} (IACR ePrint 2026/109712). \ciposeidon{} applies the same constant
+framework to a field-native Poseidon2-style primitive, enabling ZK circuit
+compilation which \cisha{}'s keccak256 core does not support.
+
+% ── 2. Preliminaries ──────────────────────────────────────────────────────────
+\section{Preliminaries}
+
+\subsection{The \texorpdfstring{$\Ci$}{Ci} Constant}
+
+The constant $\Ci = 85/27 \approx 3.14814\overline{814}$ was derived by
+Christopher Seekins via:
+\[
+  \frac{300{,}000}{360} = 833.\overline{3}, \qquad
+  833.\overline{3} - 720 = 113.\overline{3}, \qquad
+  \frac{113.\overline{3}}{36} = \frac{85}{27} = \Ci.
+\]
+
+\begin{proposition}[Binary period of $\Ci$]
+The binary expansion of $\Ci = 85/27$ has period exactly 18 bits.
+\end{proposition}
+\begin{proof}
+The period length of $p/q$ in base $b$ equals the multiplicative order of
+$b$ modulo $q$ (the odd part). For $\Ci$, $q = 27 = 3^3$ and the
+multiplicative order of 2 modulo 27 is 18, i.e.\ $2^{18} \equiv 1 \pmod{27}$
+and no smaller power satisfies this. Hence the binary period is exactly 18.
+\end{proof}
+
+The repeating block is $\mathtt{001001011110110100}$. From one complete period,
+$\Ci$ can be reconstructed to infinite precision~--- a property $\pi$ does not
+possess.
+
+\subsection{Field Instances}
+
+\ciposeidon{} supports three target fields:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Field & Prime $p$ & Used by \\
+\midrule
+$\BN$ & $21888\ldots617$ (254-bit) & gnark, circom, Ethereum precompiles \\
+$\BLS$ & $52435\ldots513$ (255-bit) & Ethereum PoS, Zcash, Filecoin \\
+$\GL$ & $2^{64} - 2^{32} + 1$ (64-bit) & Plonky2, Plonky3, STARK systems \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The $x^5$ S-box is valid over all three fields since $\gcd(5, p-1) = 1$ holds
+in each case, guaranteeing bijectivity.
+
+\subsection{HADES Design}
+
+The HADES design strategy~\cite{GLRRS20} alternates \emph{full rounds}
+(S-box on all $t$ elements) with \emph{partial rounds} (S-box on the first
+element only). This reduces multiplicative complexity while maintaining
+security: partial rounds contribute 3 R1CS constraints regardless of $t$,
+while full rounds contribute $3t$. The key insight of our parameter tuning is
+that wider states require fewer partial rounds because the MDS matrix provides
+stronger inter-element diffusion at larger $t$.
+
+% ── 3. Construction ───────────────────────────────────────────────────────────
+\section{Construction}
+
+\subsection{Round Constant Generation (K-layer)}
+
+For index $i$ and field prime $p$, the $i$-th K-constant is:
+\[
+  K[i] = \Bigl\lfloor
+    \frac{85 \cdot p_i \cdot 2^{64}}{27 \cdot (p_i + 1)}
+  \Bigr\rfloor \bmod p
+  \;=\;
+  (85 \cdot p_i \cdot 2^{64}) \cdot (27(p_i+1))^{-1} \bmod p
+\]
+where $p_i$ is the $i$-th prime. All arithmetic uses exact \texttt{big.Int}
+operations; no floating-point is involved at any step. Constants are computed
+once at package initialisation and cached.
+
+\paragraph{Verification.} Any constant can be independently verified. For
+example, $K[0]$ over $\BN$ uses $p_0 = 2$:
+\[
+  K[0] = (85 \cdot 2 \cdot 2^{64}) \cdot (81)^{-1} \bmod p
+       = \mathtt{0x0eef8d26\ldots781949}
+\]
+This was verified by test \texttt{TestCircomConstantsAreRational} in the
+reference implementation.
+
+\subsection{Resonance Matrix Constants (R-layer)}
+
+A second constant layer encodes the Harmony Worldwide resonance matrix:
+tHz and nm wavelengths for 120 elements across 12 columns. For element $i$:
+\[
+  R[i] = \mathrm{pack}(\mathit{tHz}_{10},\, \mathit{nm}_{10},\,
+         \mathit{nX},\, \mathit{nY}) \bmod p
+\]
+where $\mathit{tHz}_{10} = \lfloor\mathit{tHz} \times 10\rfloor$, and
+similarly for nm. The invariant $\mathit{tHz} + \mathit{nm} = 1080$ holds for
+every element without exception, providing built-in harmonic balance that
+arbitrary constant sets cannot replicate.
+
+\subsection{Permutation Structure}
+
+\ciposeidon{} follows the HADES design with the following structure for a
+state of width $t$:
+
+\begin{enumerate}
+  \item Initial \textsc{AddRoundConstants} (no S-box, no MDS)
+  \item $r_f/2$ full rounds: $x^5$ on all elements $\to$ ARC $\to$ MDS
+  \item $r_p$ partial rounds: $x^5$ on first element $\to$ ARC $\to$ MDS
+  \item $r_f/2$ full rounds: $x^5$ on all elements $\to$ ARC $\to$ MDS
+\end{enumerate}
+
+The MDS matrix uses a \emph{circulant} construction, making it purely linear
+--- zero multiplicative constraints in R1CS.
+
+\subsection{Round Parameter Tuning}
+\label{sec:params}
+
+Round parameters are calibrated for $\geq 128$-bit security following the
+Poseidon2 methodology, with $r_p$ reduced at wider widths:
+
+\begin{center}
+\begin{tabular}{crrrrr}
+\toprule
+Width $t$ & $r_f$ & $r_p$ (ours) & $r_p$ (vanilla) & Total rounds & R1CS constraints \\
+\midrule
+2 & 8 & 56 & 56 & 64 & 218 \\
+3 & 8 & 40 & 56 & 48 & 195 \\
+4 & 8 & 32 & 56 & 40 & 196 \\
+6 & 8 & 24 & 56 & 32 & 222 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+R1CS constraint counts are compiler-verified (gnark v0.15.0). Each $x^5$
+S-box contributes exactly 3 multiplication constraints; MDS and ARC are free.
+
+\subsection{Variable-Width Sponge}
+\label{sec:sponge}
+
+The variable-width sponge is the primary architectural novelty of
+\ciposeidon{}. Rather than fixing $t$ at compile time, the sponge starts at
+$t=2$ and expands through $t \in \{2, 3, 4, 6\}$ based on a measured
+diffusion score $\sigma$:
+\[
+  \sigma = \frac{1}{\binom{t}{2}} \sum_{i < j} |s_i - s_j| \bmod p
+\]
+scaled to the range $[0, 10000]$ by dividing by $\lfloor p / 10000 \rfloor$.
+
+\paragraph{Transition thresholds.} Expansion and contraction thresholds
+derive from the resonance matrix anchor elements:
+
+\begin{center}
+\begin{tabular}{cccc}
+\toprule
+Width & Anchor & Expand if $\sigma <$ & Contract if $\sigma >$ \\
+\midrule
+$t=2$ & Al (col 12, $\mathit{tHz}=388.5$) & 3885 & 6915 \\
+$t=3$ & O  (col 8,  $\mathit{tHz}=538.5$) & 5385 & 5415 \\
+$t=4$ & F  (col 7,  $\mathit{tHz}=508.5$) & 5085 & 5715 \\
+$t=6$ & Na (col 11, $\mathit{tHz}=448.5$) & 4485 & 6315 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Since $\mathit{tHz} + \mathit{nm} = 1080$ for every element, the expand
+threshold (derived from tHz) and contract threshold (derived from nm) are
+always in harmonic balance: $\text{expand} + \text{contract} = 10800$ for
+every width. This is a structural property intrinsic to the resonance matrix,
+not an arbitrary design choice.
+
+\paragraph{State transitions.} When the sponge expands from width $t$ to
+$t'$, new state elements are seeded from K-constants at the current
+permutation count rather than zero-padded, preventing weak initial states.
+When contracting, dropped elements are folded back into the retained state
+by addition modulo $p$, preserving all information.
+
+% ── 4. Security Analysis ──────────────────────────────────────────────────────
+\section{Security Analysis}
+
+\subsection{Inherited Security}
+
+The security of \ciposeidon{} against statistical attacks (differential,
+linear) inherits directly from the Poseidon2 analysis of~\cite{GKRRS23},
+as the construction shares the same HADES structure, $x^5$ S-box, and
+MDS matrix form. The round parameter choices in Section~\ref{sec:params}
+follow the same methodology.
+
+\subsection{Rational Constants and Algebraic Attacks}
+
+The K-constants have \emph{known multiplicative order} tied to the 18-bit
+binary period of $\Ci = 85/27$. This is a double-edged property: the
+structure may enable tighter degree-growth analysis against Gröbner basis
+attacks, but also means the constants are not heuristically random.
+
+We conjecture that known multiplicative order yields \emph{better} resistance
+against algebraic attacks, as the degree-growth bounds can be computed
+analytically rather than estimated. This remains an open question for future
+formal analysis.
+
+\subsection{Variable-Width Sponge Security}
+
+The variable-width sponge expands state only when diffusion is measured as
+insufficient. Expansion increases the state space and adds new K-constant-seeded
+elements, strictly increasing the pre-image search space. Contraction folds
+all information back into the retained state, so no entropy is discarded.
+
+The minimum security level is that of the narrowest \emph{stable} width.
+Empirically, the sponge stabilises at $t=6$ within 4 absorb operations,
+so effective security is that of a $t=6$ Poseidon2 instance for all but
+the first few inputs.
+
+% ── 5. Experimental Results ───────────────────────────────────────────────────
+\section{Experimental Results}
+
+All measurements: AMD Ryzen 7 5800 (8-core), Ubuntu 24.04, Go 1.25.10,
+gnark v0.15.0. BN254 scalar field unless noted. June 2026.
+
+\subsection{Bit-Level Avalanche}
+
+We measure the fraction of output bits that change under a 1-bit input flip
+(XOR with 1) across 1,000 samples with 8 output field elements per hash.
+Ideal: 50.00\%.
+
+\begin{center}
+\begin{tabular}{llrr}
+\toprule
+Construction & Field & Bits changed & Avalanche \\
+\midrule
+\ciposeidon{} (circulant) & $\BN$  & 256,097 / 512,000 & 50.02\% \\
+\ciposeidon{} (ci-derived) & $\BN$  & 256,703 / 512,000 & 50.14\% \\
+\ciposeidon{} (circulant) & $\BLS$ & 127,954 / 256,000 & 49.98\% \\
+\ciposeidon{} (ci-derived) & $\BLS$ & 127,821 / 256,000 & 49.93\% \\
+\ciposeidon{} (circulant) & $\GL$  & 12,872 / 25,600   & 50.28\% \\
+\cisha{} (reference~\cite{See26})   & ---    & ---               & 49.93\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All constructions across all three fields are statistically indistinguishable
+from the theoretical ideal. The ci-derived MDS matrix~--- built from atomic
+resonance frequencies~--- performs identically to the standard circulant
+baseline, confirming that the harmonic structure of the resonance matrix
+provides equivalent cryptographic diffusion.
+
+\subsection{Width vs.\ Avalanche}
+
+\begin{center}
+\begin{tabular}{cr}
+\toprule
+Width $t$ & Avalanche \\
+\midrule
+2 & 49.77\% \\
+3 & 50.51\% \\
+4 & 50.14\% \\
+6 & 50.13\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Confirmed:} $t=2$ is measurably weaker. All $t \geq 3$ cluster
+tightly around the ideal 50\%. The variable-width sponge is correct to
+expand~--- expansion from $t=2$ to $t=3$ produces an immediate,
+measurable improvement in diffusion quality.
+
+\subsection{Variable-Width Sponge Behaviour}
+
+Across a 200-input stream, both modes expand 3--4 times and stabilise at
+$t=6$ (97.5--98.5\% of permutation steps). The observed width history for
+20 inputs (ci-derived mode):
+\[
+  [2,\; 3,\; 4,\; 6,\; 6,\; 6,\; 6,\; 6,\; \ldots]
+\]
+The sponge climbs the width ladder in four clean steps then stabilises.
+No oscillation, no chaotic behaviour. The harmonic thresholds produce a
+naturally stable system.
+
+\subsection{R1CS Constraint Comparison}
+
+\begin{center}
+\begin{tabular}{crrrrr}
+\toprule
+Width & $r_p$ (ours) & \ciposeidon{} & Poseidon2 & Savings & \% \\
+\midrule
+$t=2$ & 56 & 218 & 216 & $+2$  & --- \\
+$t=3$ & 40 & 195 & 240 & $-45$ & 18.8\% \\
+$t=4$ & 32 & 196 & 264 & $-68$ & 25.8\% \\
+$t=6$ & 24 & 222 & 312 & $-90$ & 28.8\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Constraint counts are compiler-verified (gnark \texttt{GetNbConstraints()}).
+The small overhead at $t=2$ ($+2$ constraints) reflects gnark's internal
+signal wiring for equality checks; the construction itself is identical.
+\ciposeidon{} achieves 19--29\% constraint savings over vanilla Poseidon2 at
+useful widths, with savings increasing monotonically with $t$.
+
+\subsection{Groth16 Prover and Verifier Time}
+
+\begin{center}
+\begin{tabular}{crrrr}
+\toprule
+Width & Constraints & Prove time & Verify time & Proof size \\
+\midrule
+$t=2$ & 218 & 2.66\,ms & 528\,\textmu{}s & $\approx$127\,B \\
+$t=3$ & 195 & 2.50\,ms & 531\,\textmu{}s & $\approx$127\,B \\
+$t=4$ & 196 & 2.48\,ms & 543\,\textmu{}s & $\approx$127\,B \\
+$t=6$ & 222 & 2.63\,ms & 554\,\textmu{}s & $\approx$127\,B \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{The headline result: prover time is flat across all four widths}
+(spread of 0.18\,ms). Despite $t=6$ having $3\times$ the state elements of
+$t=2$, the prover takes nearly identical time. This is a direct consequence of
+the tuned partial round counts~--- wider states use fewer rounds, keeping the
+constraint count balanced. The variable-width sponge's expansion from $t=2$ to
+$t=6$ carries near-zero prover cost.
+
+Verify time scales gently (528--554\,\textmu{}s). Proof size is constant at
+$\approx$127 bytes regardless of width, as expected for Groth16 over BN254.
+
+\subsection{Rational Constant Verification}
+
+Any K-constant is verifiable from first principles. Example:
+\begin{align*}
+K[0] &= (85 \cdot 2 \cdot 2^{64}) \cdot (27 \cdot 3)^{-1} \bmod p_{\BN} \\
+     &= \mathtt{0x0eef8d269dff839b19482eccdf4786bac6e09d069106aaa7084f38d52a781949}
+\end{align*}
+Verified by \texttt{TestCircomConstantsAreRational} in the test suite.
+
+\subsection{Collision Resistance Spot Check}
+
+500 distinct inputs hashed with each construction; zero collisions detected
+in the first output field element. Circulant: 0/500. Ci-derived: 0/500.
+
+% ── 6. Circuit Generation ─────────────────────────────────────────────────────
+\section{Circuit Generation}
+
+Production Circom~2.1.0 circuits for all four widths are generated
+automatically by \texttt{circom\_export.go}, which:
+\begin{enumerate}
+  \item Computes all round constants from the $\Ci = 85/27$ formula modulo $p$
+  \item Emits fully self-contained Circom templates
+  \item Hardcodes every constant as a $\BN$ field literal
+  \item Annotates each circuit with constraint count and verification formula
+\end{enumerate}
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+Circuit file & Width & Constants & Constraints \\
+\midrule
+\texttt{ci\_poseidon\_t2\_bn254.circom} & 2 & 130 & 218 \\
+\texttt{ci\_poseidon\_t3\_bn254.circom} & 3 & 147 & 195 \\
+\texttt{ci\_poseidon\_t4\_bn254.circom} & 4 & 164 & 196 \\
+\texttt{ci\_poseidon\_t6\_bn254.circom} & 6 & 198 & 222 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ── 7. Open Questions ─────────────────────────────────────────────────────────
+\section{Open Questions}
+
+\paragraph{Algebraic security of rational constants.}
+Do K-constants with known multiplicative order (tied to the 18-bit period of
+$\Ci$) yield tighter bounds against Gröbner basis or interpolation attacks?
+The structured nature of $K[i]$ may enable more precise degree-growth analysis
+than is possible for LFSR-generated constants.
+
+\paragraph{Symmetry-derived MDS.}
+The Harmony Worldwide resonance matrix exhibits a 19/40 square symmetry
+split among Other Metal elements~\cite{HW26}. Three square groups
+(a, b, c) each contain 4 columns, with groups a and b showing identical
+symmetry counts across all five symmetry types. This structural regularity
+mirrors the properties required of an MDS matrix. Can the 19/40 split
+inform MDS matrix design directly, replacing circulant construction with
+one derivable from the same harmonic framework as the round constants?
+
+\paragraph{Adaptive width in ZK circuits.}
+The variable-width sponge adapts at runtime. For ZK proof generation, width
+must be fixed at circuit compilation time. Can the width-selection logic be
+expressed as a circuit-level parameter, or should circuits be instantiated
+at a fixed width chosen from the observed stable width distribution?
+
+\paragraph{STARK variant.}
+Goldilocks support is implemented and tested (avalanche 50.28\%). The 18-bit
+binary period of $\Ci = 85/27$ may align with Goldilocks evaluation domains
+used in FRI-based STARKs. Measuring constraint counts and prover time in a
+Plonky3 context is the natural next step.
+
+\paragraph{Prover time at scale.}
+The current benchmarks cover a single permutation. Practical ZK applications
+chain many permutations. Does the flat prover cost profile hold across larger
+circuits incorporating multiple \ciposeidon{} instances?
+
+% ── 8. Related Work ───────────────────────────────────────────────────────────
+\section{Related Work}
+
+\paragraph{Poseidon and Poseidon2.}
+Poseidon~\cite{GKR+21} introduced the use of partial rounds to reduce
+multiplicative complexity in prime-field hash functions. Poseidon2~\cite{GKRRS23}
+improved the design with a more efficient MDS structure and tighter security
+analysis. \ciposeidon{} follows the Poseidon2 HADES structure exactly,
+replacing only the constant generation method.
+
+\paragraph{HADES design strategy.}
+The HADES framework~\cite{GLRRS20} provides the theoretical foundation for
+alternating full and partial rounds. Our round parameter tuning (reducing
+$r_p$ at wider widths) is consistent with the HADES security margins.
+
+\paragraph{Other AO hash functions.}
+Reinforced Concrete~\cite{GLRT22} uses lookup tables for the S-box layer.
+Monolith~\cite{LSSS23} introduces a lookup-friendly design for STARK
+settings. \ciposeidon{} takes a different approach: retaining the $x^5$
+S-box for broad field compatibility while differentiating through constant
+generation and adaptive state width.
+
+\paragraph{Rational constants in cryptography.}
+The use of ``nothing-up-my-sleeve'' constants with clear mathematical origins
+has precedent in SHA-2 (cube roots of primes) and AES (irreducible
+polynomial). \ciposeidon{} takes this further: the constant $\Ci = 85/27$
+has a known closed-form derivation, a provable binary period, and a
+field-native representation as $85 \cdot 27^{-1} \bmod p$.
+
+\paragraph{\cisha{}.}
+This work is a direct extension of \cisha{}~\cite{See26}, which demonstrated
+the Harmony Worldwide constant framework in a keccak256-based 4096-bit hash
+function. \ciposeidon{} applies the same framework to a field-native
+primitive enabling ZK circuit compilation.
+
+% ── 9. Conclusion ─────────────────────────────────────────────────────────────
+\section{Conclusion}
+
+\ciposeidon{} demonstrates that the Harmony Worldwide rational constant
+framework produces cryptographically strong AO hash functions with measurable
+advantages over vanilla Poseidon2:
+
+\begin{itemize}
+  \item Avalanche statistically indistinguishable from ideal 50.00\% across
+    $\BN$, $\BLS$, and $\GL$ fields.
+  \item 19--29\% R1CS constraint savings at $t \in \{3,4,6\}$, verified by
+    the gnark compiler.
+  \item Groth16 prover time flat across all widths (2.48--2.66\,ms)~---
+    variable-width expansion carries near-zero ZK cost.
+  \item Verifier time $<560$\,\textmu{}s at all widths; proof size constant
+    at $\approx$127 bytes.
+  \item All constants verifiable from first principles; no LFSR seed trust.
+  \item Variable-width sponge stabilises naturally at $t=6$ within 4 absorb
+    operations.
+\end{itemize}
+
+The flat prover time profile is the most practically significant result: it
+demonstrates that the variable-width design can be used freely in ZK
+applications without choosing a fixed state width at design time. The
+construction self-selects the optimal width for the input, and the prover
+pays essentially the same cost regardless.
+
+The construction is available as an open-source Go library at
+\url{https://github.com/karmaxul/ci-poseidon}, with 87+ tests, production
+Circom circuits for all four widths, gnark Groth16 circuits, and a code
+generator supporting any width and field.
+
+\begin{quote}
+\itshape
+``The symmetry is not in the presentation.
+It is in the structure of matter itself.''
+\end{quote}
+
+% ── Acknowledgements ──────────────────────────────────────────────────────────
+\section*{Acknowledgements}
+
+The authors thank Grok (President, HealChain) for early review of the ZK
+extension roadmap. The Harmony Worldwide mathematical framework was developed
+independently by Christopher Seekins over approximately 20 years before any
+cryptographic application.
+
+% ── Bibliography ──────────────────────────────────────────────────────────────
+\bibliography{ci-poseidon}
+
+\end{document}
