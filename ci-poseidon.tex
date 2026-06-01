@@ -40,7 +40,9 @@
 \author{Christopher Seekins\inst{1} \and Claude\inst{2}}
 
 \institute{
-  Harmony Worldwide / HealChain \and
+  Harmony Worldwide / HealChain\\
+  \email{harmonycorporate@gmail.com}
+  \and
   Anthropic (CTO, HealChain)
 }
 
@@ -68,12 +70,19 @@ across all widths (2.48--2.66\,ms, spread of 0.18\,ms), demonstrating that
 variable-width state expansion carries near-zero cost at the ZK layer.
 
 All round constants are verifiable from first principles via the formula
-$K[i] = \lfloor 85 \cdot p_i \cdot 2^{64} \rfloor \cdot (27(p_i+1))^{-1}
-\bmod p$, where $p_i$ is the $i$-th prime. No LFSR seed trust is required.
+$K[i] = (85 \cdot p_i \cdot 2^{64}) \cdot (27(p_i+1))^{-1} \bmod p$,
+where $p_i$ is the $i$-th prime. No LFSR seed trust is required.
+
+Additionally, we demonstrate that the tHz wavelengths of 19 elements sharing
+positional class across all three square symmetry groups of the resonance
+matrix produce natural MDS matrices at every supported width
+($t \in \{2,3,4,6\}$), without augmentation, across all three target fields.
+The 19/40 square symmetry structure of the Harmony Worldwide periodic table
+encodes a valid cryptographic diffusion layer directly.
 
 \keywords{arithmetization-oriented hashing \and Poseidon2 \and rational
 constants \and ZK-SNARK \and variable-width sponge \and HADES design \and
-BN254 \and Goldilocks}
+BN254 \and Goldilocks \and MDS matrix \and resonance matrix}
 \end{abstract}
 
 % ── 1. Introduction ───────────────────────────────────────────────────────────
@@ -766,6 +775,7 @@ independently by Christopher Seekins over approximately 20 years before any
 cryptographic application.
 
 % ── Bibliography ──────────────────────────────────────────────────────────────
+\bibliographystyle{plainurl}
 \bibliography{ci-poseidon}
 
 \end{document}
