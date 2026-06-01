@@ -1,0 +1,55 @@
+\begin{thebibliography}{1}
+
+\bibitem{LSSS23}
+Tomer Ashur, Mohammad Mahzoun, and Dilara Toprakhisar.
+\newblock Monolith: Circuit-friendly hash functions with new nonlinear layers
+  for {ZK} applications.
+\newblock Cryptology ePrint Archive, Report 2023/1025, 2023.
+\newblock \url{https://eprint.iacr.org/2023/1025}.
+
+\bibitem{GKRRS23}
+Lorenzo Grassi, Dmitry Khovratovich, Reinhard Lüftenegger, Christian
+  Rechberger, Markus Schofnegger, and Roman Walch.
+\newblock {Poseidon2}: {A} faster version of the {Poseidon} hash function.
+\newblock In {\em Progress in Cryptology -- {AFRICACRYPT} 2023}, volume 14064
+  of {\em Lecture Notes in Computer Science}, pages 177--203. Springer, 2023.
+\newblock \url{https://eprint.iacr.org/2023/323}.
+
+\bibitem{GKR+21}
+Lorenzo Grassi, Dmitry Khovratovich, Christian Rechberger, Arnab Roy, and
+  Markus Schofnegger.
+\newblock {Poseidon}: {A} new hash function for zero-knowledge proof systems.
+\newblock In {\em 30th {USENIX} Security Symposium}, pages 519--535. {USENIX}
+  Association, 2021.
+\newblock \url{https://eprint.iacr.org/2019/458}.
+
+\bibitem{GLRRS20}
+Lorenzo Grassi, Reinhard Lüftenegger, Christian Rechberger, Dragos Rotaru, and
+  Markus Schofnegger.
+\newblock On a generalization of substitution-permutation networks: The {HADES}
+  design strategy.
+\newblock In {\em Advances in Cryptology -- {EUROCRYPT} 2020}, volume 12106 of
+  {\em Lecture Notes in Computer Science}, pages 674--704. Springer, 2020.
+\newblock \url{https://eprint.iacr.org/2019/1107}.
+
+\bibitem{GLRT22}
+Lorenzo Grassi, Reinhard Lüftenegger, Christian Rechberger, Dragos Rotaru, and
+  Markus Schofnegger.
+\newblock Reinforced concrete: {A} fast hash function for verifiable
+  computation.
+\newblock Cryptology ePrint Archive, Report 2021/1038, 2022.
+\newblock \url{https://eprint.iacr.org/2021/1038}.
+
+\bibitem{See26}
+Christopher Seekins.
+\newblock {ci-sha4096}: {A} 4096-bit hash function from rational constants and
+  atomic resonance spectra.
+\newblock Cryptology ePrint Archive, Report 2026/109712, 2026.
+\newblock \url{https://eprint.iacr.org/2026/109712}.
+
+\bibitem{HW26}
+Christopher Seekins.
+\newblock Harmony {Worldwide} periodic table: Symmetry documentation, 2026.
+\newblock \url{https://healchain.org/force/quantum-computing}.
+
+\end{thebibliography}

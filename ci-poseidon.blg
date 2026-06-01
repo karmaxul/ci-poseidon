@@ -1,0 +1,51 @@
+This is BibTeX, Version 0.99d (TeX Live 2023/Debian)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: ci-poseidon.aux
+The style file: plainurl.bst
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: ci-poseidon.bib
+You've used 7 entries,
+            2943 wiz_defined-function locations,
+            684 strings with 6741 characters,
+and the built_in function-call counts, 3690 in all, are:
+= -- 388
+> -- 156
+< -- 5
++ -- 59
+- -- 52
+* -- 184
+:= -- 536
+add.period$ -- 30
+call.type$ -- 7
+change.case$ -- 47
+chr.to.int$ -- 0
+cite$ -- 7
+duplicate$ -- 99
+empty$ -- 333
+format.name$ -- 52
+if$ -- 955
+int.to.chr$ -- 0
+int.to.str$ -- 7
+missing$ -- 3
+newline$ -- 44
+num.names$ -- 14
+pop$ -- 100
+preamble$ -- 1
+purify$ -- 40
+quote$ -- 0
+skip$ -- 243
+stack$ -- 0
+substring$ -- 131
+swap$ -- 41
+text.length$ -- 5
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 28
+warning$ -- 0
+while$ -- 23
+width$ -- 8
+write$ -- 92
