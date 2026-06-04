@@ -12,3 +12,7 @@ p3-merkle-tree = { git = "https://github.com/Plonky3/Plonky3" }
 
 [dev-dependencies]
 criterion = "0.5"
+
+[[bench]]
+name = "permutation"
+harness = false
