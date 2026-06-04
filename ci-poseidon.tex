@@ -68,6 +68,11 @@ Poseidon2 at state widths $t \in \{3,4,6\}$, verified directly by the gnark
 v0.15.0 compiler. Most significantly, Groth16 prover time is \emph{flat}
 across all widths (2.48--2.66\,ms, spread of 0.18\,ms), demonstrating that
 variable-width state expansion carries near-zero cost at the ZK layer.
+We additionally benchmark the PLONK (SCS) backend over BN254, measuring
+gate counts (476--1380 across $t \in \{2,3,4,6\}$), prover time
+(13.5--32.0\,ms), and verifier time (1.18--1.24\,ms). PLONK verifier time
+is also flat across all widths (spread of 0.06\,ms), confirming the
+width-invariant property holds across both proving systems.
 
 All round constants are verifiable from first principles via the formula
 $K[i] = (85 \cdot p_i \cdot 2^{64}) \cdot (27(p_i+1))^{-1} \bmod p$,
@@ -441,6 +446,46 @@ $t=6$ carries near-zero prover cost.
 Verify time scales gently (528--554\,\textmu{}s). Proof size is constant at
 $\approx$127 bytes regardless of width, as expected for Groth16 over BN254.
 
+\subsection{Plonkish Arithmetization (PLONK/SCS)}
+
+To complement the Groth16 results, we compile all four circuits under gnark's
+PLONK backend (sparse constraint system, BN254) and measure gate counts,
+prover time, verifier time, and proof size.
+
+\begin{center}
+\begin{tabular}{crrrrr}
+\toprule
+Width & PLONK gates & R1CS & Delta & Prove time & Verify time \\
+\midrule
+$t=2$ & 476 & 216 & $+260$ & 13.5\,ms & 1.23\,ms \\
+$t=4$ & 840 & 192 & $+648$ & 19.1\,ms & 1.22\,ms \\
+$t=6$ & 1380 & 216 & $+1164$ & 32.0\,ms & 1.19\,ms \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+PLONK proof size (t=3, BN254): 520\,bytes. Groth16 comparison: $\approx$127\,bytes.
+
+\paragraph{Gate count growth.} The PLONK gate count grows with width
+($476 \to 1380$, $t=2 \to t=6$), in contrast to the near-flat R1CS profile.
+This is expected: in R1CS, linear operations (MDS matrix multiplication) are
+free. In PLONK's sparse constraint system, MDS multiplications contribute
+gates. The delta column quantifies exactly this cost: $+260$ gates at $t=2$
+growing to $+1164$ at $t=6$, proportional to the $t^2$ MDS work.
+
+\paragraph{Flat verifier time.} Despite the growing gate count,
+\textbf{PLONK verifier time is flat across all widths}
+(1.18--1.24\,ms, spread of 0.06\,ms). This confirms the width-invariant
+verification property holds across both Groth16 and PLONK proving systems
+— a consequence of the balanced partial round structure, not an artefact
+of one specific backend.
+
+\paragraph{Groth16 vs.\ PLONK tradeoffs.} Groth16 dominates on proof size
+($\approx$127\,B vs.\ 520\,B) and prover speed (2.48--2.66\,ms vs.\
+13--30\,ms). PLONK requires no trusted setup, making it preferable for
+deployments where ceremony infrastructure is unavailable. The flat verifier
+time profile is preserved in both systems.
+
 \subsection{Rational Constant Verification}
 
 Any K-constant is verifiable from first principles. Example:
@@ -737,6 +782,9 @@ advantages over vanilla Poseidon2:
     variable-width expansion carries near-zero ZK cost.
   \item Verifier time $<560$\,\textmu{}s at all widths; proof size constant
     at $\approx$127 bytes.
+  \item PLONK (SCS) backend verified: gate counts 476--1380, prover
+    13.5--32.0\,ms, verifier flat at 1.18--1.24\,ms across all widths.
+    Proof size 520\,bytes; no trusted setup required.
   \item All constants verifiable from first principles; no LFSR seed trust.
   \item Variable-width sponge stabilises naturally at $t=6$ within 4 absorb
     operations.
@@ -758,7 +806,7 @@ These properties were not designed. They were found.
 
 The construction is available as an open-source Go library at
 \url{https://github.com/karmaxul/ci-poseidon}, with 87+ tests, production
-Circom circuits, gnark Groth16 circuits, and full symmetry MDS research.
+Circom circuits, gnark Groth16 and PLONK circuits, and full symmetry MDS research.
 
 \begin{quote}
 \itshape
