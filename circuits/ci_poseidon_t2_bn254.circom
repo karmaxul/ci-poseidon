@@ -283,3 +283,13 @@ template CiPoseidon_t2() {
     out[1] <== fr2_3.out[1];
 }
 
+
+template CiPoseidonHash_t2() {
+    signal input  in[2];
+    signal output out;
+    component h = CiPoseidon_t2();
+    h.in[0] <== in[0];
+    h.in[1] <== in[1];
+    out <== h.out[0];
+}
+component main = CiPoseidonHash_t2();
