@@ -1,3 +1,18 @@
+# ci-Poseidon: Rational Constant Structures for Arithmetization-Oriented Hash Functions
+
+**GitHub:** https://github.com/karmaxul/ci-poseidon  
+**Paper:** [ci-Poseidon ePrint](https://eprint.iacr.org/2026/XXXX) (latest revision)
+
+### Project Family
+
+This repository is part of the **HealChain / Harmony Worldwide Cryptographic Suite**:
+
+- **[ci-sha4096](https://github.com/karmaxul/ci-sha4096)** — 4096-bit classical hash function with dual constant layers (K-sequence from Ci = 85/27 and tHz resonance matrix)
+- **[ci-poseidon](https://github.com/karmaxul/ci-poseidon)** — Arithmetization-oriented ZK-friendly hash (this repo)
+- **[ci-quantum-storage](https://github.com/karmaxul/ci-quantum-storage)** — Classical stabilizer / reference implementation demo
+
+All three projects derive constants from the same **Harmony Worldwide mathematical framework** (Ci = 85/27 + resonance matrix).
+
 # ci-poseidon
 
 ZK-friendly hash construction using rational constants derived from Ci = 85/27 — arithmetization-oriented variant of ci-sha4096.
