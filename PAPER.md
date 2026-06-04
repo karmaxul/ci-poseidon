@@ -17,7 +17,10 @@ first-principles derivation; and (2) a variable-width sponge that adapts its int
 state geometry based on measured diffusion, governed by atomic resonance thresholds
 from the Harmony Worldwide periodic table. We report experimental results across
 three fields (BN254, BLS12-381, Goldilocks) demonstrating ideal avalanche behaviour
-and 20–31% R1CS constraint savings over vanilla Poseidon2 at wider state widths.
+and 19–29% R1CS constraint savings over vanilla Poseidon2 at wider state widths.
+We additionally benchmark the PLONK (SCS) backend, finding flat verifier time
+(1.18–1.24ms) across all widths — confirming the width-invariant property holds
+across both proving systems.
 
 ---
 
@@ -302,6 +305,47 @@ Groth16 proof size is constant at ~127 bytes regardless of circuit size.
 
 **Memory allocation** is consistent across widths (~297–306 KB per proof),
 confirming the flat cost profile is not an artefact of memory effects.
+
+---
+
+### 4.9 Plonkish Arithmetization (PLONK/SCS)
+
+To complement the Groth16 results, all four circuits were compiled under gnark's
+PLONK backend (sparse constraint system, BN254) and benchmarked on the same
+AMD Ryzen 7 5800 hardware.
+
+**Gate counts (PLONK/SCS vs R1CS):**
+
+| Width | PLONK gates | R1CS | Delta | rf | rp |
+|-------|------------|------|-------|----|----|
+| t=2   | 476        | 216  | +260  | 8  | 56 |
+| t=3   | 630        | 192  | +438  | 8  | 40 |
+| t=4   | 840        | 192  | +648  | 8  | 32 |
+| t=6   | 1380       | 216  | +1164 | 8  | 24 |
+
+The gate count grows with width because PLONK's SCS backend counts MDS matrix
+multiplications as gates, whereas R1CS treats linear operations as free. The
+delta column quantifies exactly this MDS cost — proportional to t² work.
+
+**Prover and verifier times:**
+
+| Width | Prove   | Verify  |
+|-------|---------|---------|
+| t=2   | 13.5ms  | 1.23ms  |
+| t=3   | 19.0ms  | 1.18ms  |
+| t=4   | 19.1ms  | 1.22ms  |
+| t=6   | 32.0ms  | 1.19ms  |
+
+PLONK proof size (t=3, BN254): **520 bytes** vs Groth16's ~127 bytes.
+
+**Key finding: PLONK verifier time is flat across all widths** (1.18–1.24ms,
+spread of 0.06ms). The width-invariant verification property holds in both
+Groth16 and PLONK proving systems — confirming it is a structural consequence
+of the balanced partial round design, not an artefact of one backend.
+
+PLONK prover time is NOT flat (13.5ms→32.0ms), reflecting the MDS gate cost
+that grows with width. Groth16 remains faster for both proving and verification,
+with 4× smaller proofs. PLONK's advantage is no trusted setup requirement.
 
 ---
 
