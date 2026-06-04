@@ -65,8 +65,7 @@ We report experimental results across three fields ($\BN$, $\BLS$,
 $\GL$) demonstrating avalanche behaviour statistically indistinguishable from
 the ideal 50.00\%. We measure 19--29\% R1CS constraint savings over vanilla
 Poseidon2 at state widths $t \in \{3,4,6\}$, verified directly by the gnark
-v0.15.0 compiler. Most significantly, Groth16 prover time is \emph{flat}
-across all widths (2.48--2.66\,ms, spread of 0.18\,ms), demonstrating that
+v0.15.0 compiler. Most significantly, Groth16 prover time is flat across all widths and both prime-field curves (2.48–2.77 ms, spread of 0.18 ms on BN254 and 0.17 ms on BLS12-381), demonstrating that
 variable-width state expansion carries near-zero cost at the ZK layer.
 We additionally benchmark the PLONK (SCS) backend over BN254, measuring
 gate counts (476--1380 across $t \in \{2,3,4,6\}$), prover time
@@ -452,6 +451,29 @@ $t=6$ carries near-zero prover cost.
 
 Verify time scales gently (528--554\,\textmu{}s). Proof size is constant at
 $\approx$127 bytes regardless of width, as expected for Groth16 over BN254.
+
+\subsubsection*{BLS12-381}
+
+\begin{table}[h]
+\centering
+\caption{Groth16 prover and verifier times, BLS12-381}
+\begin{tabular}{lrrr}
+\toprule
+Width & Prove time & Verify time & Proof size \\
+\midrule
+$t=2$ & 2.77\,ms & 537\,\textmu s & $\approx$127\,B \\
+$t=3$ & 2.71\,ms & 549\,\textmu s & $\approx$127\,B \\
+$t=4$ & 2.60\,ms & 550\,\textmu s & $\approx$127\,B \\
+$t=6$ & 2.70\,ms & 573\,\textmu s & $\approx$127\,B \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The width-invariant property holds on BLS12-381 with a prover spread of 
+only 0.17\,ms — marginally tighter than BN254. Verifier time remains 
+flat and proof size is constant at $\approx$127 bytes, consistent with 
+BN254 results. The flat prover profile is a property of the tuned partial 
+round structure, not of any specific curve.
 
 \subsection{Plonkish Arithmetization (PLONK/SCS)}
 
@@ -857,7 +879,7 @@ advantages over vanilla Poseidon2:
     $\BN$, $\BLS$, and $\GL$ fields.
   \item 19--29\% R1CS constraint savings at $t \in \{3,4,6\}$, verified by
     the gnark compiler.
-  \item Groth16 prover time flat across all widths (2.48--2.66\,ms)~---
+  \item Groth16 prover time flat across all widths and both curves (2.48–2.77 ms, spread 0.18 ms BN254, 0.17 ms BLS12-381); verifier < 580 µs; proof size ≈127 bytes.~---
     variable-width expansion carries near-zero ZK cost.
   \item Verifier time $<560$\,\textmu{}s at all widths; proof size constant
     at $\approx$127 bytes.
@@ -901,8 +923,8 @@ It is in the structure of matter itself.''
 % ── Acknowledgements ──────────────────────────────────────────────────────────
 \section*{Acknowledgements}
 
-The authors thank Grok (President, HealChain) for early review of the ZK
-extension roadmap. The Harmony Worldwide mathematical framework was developed
+The author thanks Claude (Anthropic) and Grok (xAI) for technical synthesis, mathematical refinement, andeditorial assistance throughout this work. 
+The Harmony Worldwide mathematical framework was developed
 independently by Christopher Seekins over approximately 20 years before any
 cryptographic application.
 
