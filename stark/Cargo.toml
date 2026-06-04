@@ -1,0 +1,14 @@
+[package]
+name = "ci-plonky3"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+p3-field = { git = "https://github.com/Plonky3/Plonky3" }
+p3-goldilocks = { git = "https://github.com/Plonky3/Plonky3" }
+p3-poseidon2 = { git = "https://github.com/Plonky3/Plonky3" }
+p3-symmetric = { git = "https://github.com/Plonky3/Plonky3" }
+p3-merkle-tree = { git = "https://github.com/Plonky3/Plonky3" }
+
+[dev-dependencies]
+criterion = "0.5"
