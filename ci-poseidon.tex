@@ -908,10 +908,10 @@ expressed as a circuit-level parameter, or should circuits be instantiated
 at a fixed width chosen from the observed stable width distribution?
 
 \paragraph{STARK variant.}
-Goldilocks support is implemented and tested (avalanche 50.28\%). The 18-bit
-binary period of $\Ci = 85/27$ may align with Goldilocks evaluation domains
-used in FRI-based STARKs. Measuring constraint counts and prover time in a
-Plonky3 context is the natural next step.
+The Plonky3/Goldilocks implementation is complete (Section~4.11). The
+remaining open question is whether the 18-bit binary period of $\Ci = 85/27$
+aligns with Goldilocks evaluation domains in FRI-based proof systems in a
+way that enables tighter security analysis or further performance gains.
 
 \paragraph{Prover time at scale.}
 The current benchmarks cover a single permutation. Practical ZK applications
