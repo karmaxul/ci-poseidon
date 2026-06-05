@@ -7,11 +7,14 @@
 
 This repository is part of the **HealChain / Harmony Worldwide Cryptographic Suite**:
 
-- **[ci-sha4096](https://github.com/karmaxul/ci-sha4096)** — 4096-bit classical hash function with dual constant layers (K-sequence from Ci = 85/27 and tHz resonance matrix)
-- **[ci-poseidon](https://github.com/karmaxul/ci-poseidon)** — Arithmetization-oriented ZK-friendly hash (this repo)
-- **[ci-quantum-storage](https://github.com/karmaxul/ci-quantum-storage)** — Classical stabilizer / reference implementation demo
+- **[HealChain-crypto](https://github.com/karmaxul/HealChain-crypto)** — Umbrella repo — cryptographic suite overview
+- **[ci-sha4096](https://github.com/karmaxul/ci-sha4096)** — 4096-bit classical hash, IACR ePrint 2026/109810
+- **[ci-poseidon](https://github.com/karmaxul/ci-poseidon)** — Arithmetization-oriented ZK-friendly hash, IACR ePrint (pending)
+- **[ci-plonky3](https://github.com/karmaxul/ci-plonky3)** — STARK variant over Goldilocks/Plonky3 — K-sequence 5.1% faster than Grain LFSR at t=12
+- **[ci-quantum-storage](https://github.com/karmaxul/ci-quantum-storage)** — Classical stabilizer / reference implementation
+- **[HealChain](https://healchain.org)** — Production deployment using ci-poseidon for on-chain ZK commitments
 
-All three projects derive constants from the same **Harmony Worldwide mathematical framework** (Ci = 85/27 + resonance matrix).
+All projects derive constants from the same **Harmony Worldwide mathematical framework** (Ci = 85/27 + resonance matrix).
 
 # ci-poseidon
 
@@ -126,6 +129,20 @@ circuits/               — Generated Circom circuits (BN254, all widths)
 gnark/                  — gnark Groth16 circuit and benchmark
 RESEARCH/               — Square symmetry MDS derivation and analysis
 ```
+
+---
+
+## Deployed Verifier Contracts (Sepolia)
+
+| Width | Contract Address | Status |
+|---|---|---|
+| t=2 | `0x43bBb210d78A5Ce79F99741D6335B478194080D0` | ✅ Verified |
+| t=3 | `0x75cc3fF2905e328E199Fda66c200244112147084` | ✅ Verified |
+| t=4 | `0x310273499087dDd432156013478d6B2c7ac15567` | ✅ Verified |
+| t=6 | `0x77A05B1d95a91607048700715438932eDb772ced` | ✅ Verified |
+
+Call `verifyProof(uint256[2],uint256[2][2],uint256[2],uint256[1])` returns `bool`.
+Deployed June 2026 on Ethereum Sepolia testnet.
 
 ---
 
