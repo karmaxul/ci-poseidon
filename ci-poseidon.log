@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.6.1)  4 JUN 2026 14:23
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.6.1)  4 JUN 2026 20:32
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -843,7 +843,7 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <9> on input line 52.
 LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 9
-7.
+9.
 
 (/usr/share/texmf/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
@@ -851,23 +851,17 @@ File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 IACR@AUTHOR: Christopher Seekins, Claude
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 97.
+(hyperref)                removing `math shift' on input line 99.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 97.
+(hyperref)                removing `math shift' on input line 99.
 
 IACR@TITLE: \ensuremath {\mathsf {ci\text {-}Poseidon}}: Rational Constant Stru
 ctures for Arithmetization-Oriented Hash Functions
 
 
-LaTeX Warning: Citation `GKRRS23' on page 1 undefined on input line 104.
-
-
-LaTeX Warning: Citation `GLRRS20' on page 1 undefined on input line 105.
-
-
-Underfull \vbox (badness 5696) has occurred while \output is active []
+Underfull \vbox (badness 2698) has occurred while \output is active []
 
  [1
 
@@ -875,14 +869,9 @@ Underfull \vbox (badness 5696) has occurred while \output is active []
 dvips/lm/lm-rm.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-ec.enc}{/usr/share/t
 exmf/fonts/enc/dvips/lm/lm-mathit.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-m
 athsy.enc}{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}]
-
-LaTeX Warning: Citation `HW26' on page 2 undefined on input line 117.
-
-
-LaTeX Warning: Citation `See26' on page 2 undefined on input line 131.
-
 LaTeX Font Info:    Trying to load font information for OT1+lmtt on input line 
-160.
+162.
+
 (/usr/share/texmf/tex/latex/lm/ot1lmtt.fd
 File: ot1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -891,54 +880,22 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
  [2{/usr/share/texmf/fonts/enc/dvips/lm/lm-rmtt.enc}]
-
-LaTeX Warning: Citation `GLRRS20' on page 3 undefined on input line 185.
-
 Package microtype Info: Character `029' is missing
 (microtype)             in font `T1/lmr/m/sc/10'.
 (microtype)             Ignoring protrusion settings for this character.
-[3{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc}]
-
-LaTeX Warning: Citation `GKRRS23' on page 4 undefined on input line 315.
-
-[4]
-
-LaTeX Warning: Citation `See26' on page 5 undefined on input line 366.
-
-[5]
-
-LaTeX Warning: `h' float specifier changed to `ht'.
-
-[6] [7] [8]
-Overfull \hbox (5.88574pt too wide) in paragraph at lines 662--673
+ [3{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc}]
+[4] [5] [6] [7] [8] [9]
+Overfull \hbox (5.88574pt too wide) in paragraph at lines 703--714
  [] 
  []
 
-[9] [10] [11]
-Overfull \hbox (40.49068pt too wide) in paragraph at lines 829--834
+[10] [11] [12]
+Overfull \hbox (40.49068pt too wide) in paragraph at lines 917--922
  []\T1/lmss/bx/n/10 (-20) Palindrome and cryp-to-graphic sig-nif-i-cance.[] \T1
 /lmr/m/n/10 (-20) The 12-column sub-class se-quence 2,2,4,3,1,3,3,1,3,4,2,2
  []
 
-
-LaTeX Warning: Citation `GKR+21' on page 12 undefined on input line 839.
-
-
-LaTeX Warning: Citation `GKRRS23' on page 12 undefined on input line 840.
-
-
-LaTeX Warning: Citation `GLRRS20' on page 12 undefined on input line 846.
-
-
-LaTeX Warning: Citation `GLRT22' on page 12 undefined on input line 851.
-
-
-LaTeX Warning: Citation `LSSS23' on page 12 undefined on input line 852.
-
-
-LaTeX Warning: Citation `See26' on page 12 undefined on input line 865.
-
-[12]
+[13]
 
 ! LaTeX Error: Unicode character ≈ (U+2248)
                not set up for use with LaTeX.
@@ -947,39 +904,32 @@ See the LaTeX manual or LaTeX Companion for explanation.
 Type  H <return>  for immediate help.
  ...                                              
                                                   
-l.882 ...-381); verifier < 580 µs; proof size ≈
+l.970 ...-381); verifier < 580 µs; proof size ≈
                                                   127 bytes.~---
 You may provide a definition with
 \DeclareUnicodeCharacter 
 
-(./ci-poseidon.bbl [13])
+(./ci-poseidon.bbl [14])
 (/usr/share/texlive/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 )
 (/usr/share/texlive/texmf-dist/tex/generic/stringenc/se-utf8.def
 File: se-utf8.def 2019/11/29 v1.12 stringenc: UTF-8
-) [14]
+) [15]
 (./ci-poseidon.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
-
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
 Package rerunfilecheck Info: File `ci-poseidon.out' has not changed.
-(rerunfilecheck)             Checksum: 0D266180D99DE9E3E21913DC3617D692;6337.
+(rerunfilecheck)             Checksum: 773F51F22EB292F435559FCE7B378D9E;6694.
  ) 
 Here is how much of TeX's memory you used:
- 17524 strings out of 474222
- 271763 string characters out of 5748734
+ 17541 strings out of 474222
+ 271986 string characters out of 5748734
  1939975 words of memory out of 5000000
- 39001 multiletter control sequences out of 15000+600000
- 749301 words of font info for 322 fonts, out of 8000000 for 9000
+ 39006 multiletter control sequences out of 15000+600000
+ 749547 words of font info for 325 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  75i,16n,93p,1008b,623s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/ty
@@ -999,10 +949,10 @@ fonts/type1/public/lm/lmsy6.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy7.p
 fb></usr/share/texmf/fonts/type1/public/lm/lmsy9.pfb></usr/share/texmf/fonts/ty
 pe1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt9.pfb></us
 r/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on ci-poseidon.pdf (14 pages, 513514 bytes).
+Output written on ci-poseidon.pdf (15 pages, 518793 bytes).
 PDF statistics:
- 463 PDF objects out of 1000 (max. 8388607)
- 381 compressed objects within 4 object streams
- 96 named destinations out of 1000 (max. 500000)
- 115501 words of extra memory for PDF output out of 128383 (max. 10000000)
+ 491 PDF objects out of 1000 (max. 8388607)
+ 407 compressed objects within 5 object streams
+ 102 named destinations out of 1000 (max. 500000)
+ 115509 words of extra memory for PDF output out of 128383 (max. 10000000)
 
