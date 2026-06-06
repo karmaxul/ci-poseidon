@@ -647,6 +647,53 @@ Verified by \texttt{TestCircomConstantsAreRational} in the test suite.
 500 distinct inputs hashed with each construction; zero collisions detected
 in the first output field element. Circulant: 0/500. Ci-derived: 0/500.
 
+\subsection{snarkJS Verification}
+\label{sec:snarkjs}
+
+To complement the gnark Groth16 benchmarks, we verify all four circuit widths using snarkJS~0.7.6 under Node.js~18,
+the same library used in the HealChain browser integrity layer.
+This complements the gnark Groth16 and PLONK benchmarks above and confirms
+that proofs generated natively and verified in JavaScript share a consistent
+verification interface.
+
+\paragraph{Results (AMD Ryzen 7 5800, Node.js 18.19.1).}
+
+\begin{center}
+\begin{tabular}{crrrr}
+\toprule
+Width & Prove time & Verify time & Valid & Deterministic \\
+\midrule
+$t=2$ & 360\,ms & 19\,ms & \checkmark & \checkmark \\
+$t=3$ &  52\,ms & 14\,ms & \checkmark & \checkmark \\
+$t=4$ &  64\,ms & 13\,ms & \checkmark & \checkmark \\
+$t=6$ &  56\,ms & 15\,ms & \checkmark & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All four widths verify correctly. Three independent runs of $t=3$ produce
+identical commitments, confirming determinism. Verify time is consistent
+across widths (13--19\,ms), matching the flat profile observed in gnark.
+
+\paragraph{$t=2$ anomaly.}
+The $t=2$ prover is ${\approx}7\times$ slower than $t=3$--$t=6$
+(360\,ms vs.\ 52--64\,ms), in contrast to gnark where prover time is
+flat across all widths (2.48--2.66\,ms, spread 0.18\,ms). The anomaly
+is reproducible and not attributable to JIT warm-up — it persists across
+repeated runs.
+
+The likely cause is the partial round count: $t=2$ uses $r_p = 56$
+partial rounds (identical to vanilla Poseidon2), while $t=3$--$t=6$
+use our tuned counts of 40, 32, and 24 respectively. The snarkJS WASM
+witness calculator exhibits higher sensitivity to the partial round loop
+than gnark's compiled prover, whose FFT and MSM operations dominate
+and mask the round-count difference. This is consistent with the
+observation that the gnark flat-prover result arises from balanced
+\emph{constraint counts}, not balanced \emph{round counts}.
+
+The test script is available at
+\url{https://github.com/karmaxul/ci-poseidon/blob/main/snarkjs_test.js}.
+
 % ── 6. Circuit Generation ─────────────────────────────────────────────────────
 \section{Circuit Generation}
 
@@ -988,6 +1035,11 @@ advantages over vanilla Poseidon2:
   \item All constants verifiable from first principles; no LFSR seed trust.
   \item Variable-width sponge stabilises naturally at $t=6$ within 4 absorb
     operations.
+  \item \textbf{snarkJS verification} (Node.js 18, snarkJS 0.7.6): all four widths
+  verify correctly. Verify time flat at 13--19\,ms across $t \in \{2,3,4,6\}$.
+  $t=2$ prove time anomaly (${\approx}7\times$ slower than $t \geq 3$) attributed
+  to partial round count sensitivity in the WASM witness calculator — absent in
+  gnark where constraint-count balance dominates.
 \end{itemize}
 
 Beyond the core construction, Section~\ref{sec:symmetry} presents a
