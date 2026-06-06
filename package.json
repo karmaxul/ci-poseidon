@@ -1,0 +1,23 @@
+{
+  "name": "ci-poseidon",
+  "version": "1.0.0",
+  "description": "**GitHub:** https://github.com/karmaxul/ci-poseidon   **Paper:** [ci-Poseidon ePrint](https://eprint.iacr.org/2026/XXXX) (latest revision)",
+  "main": "snarkjs_test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karmaxul/ci-poseidon.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/karmaxul/ci-poseidon/issues"
+  },
+  "homepage": "https://github.com/karmaxul/ci-poseidon#readme",
+  "dependencies": {
+    "snarkjs": "^0.7.6"
+  }
+}
